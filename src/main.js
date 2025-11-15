@@ -40,36 +40,19 @@ function collectState() {
 
 }
 
-
-
-// const applySearching = initSearching('search')
-
-// const applyFiltering = initFiltering(sampleTable.filter.elements, {    // передаём элементы фильтра
-//  searchBySeller: indexes.sellers                                    // для элемента с именем searchBySeller устанавливаем массив продавцов
-//});
-
 // @todo: инициализация
 
-//const applySorting = initSorting([        // Нам нужно передать сюда массив элементов, которые вызывают сортировку, чтобы изменять их визуальное представление
-   // sampleTable.header.elements.sortByDate,
-    //sampleTable.header.elements.sortByTotal
-//]);
-
-
-async function init() {
-    const indexes = await api.getIndexes()
-}
 /**
  * Перерисовка состояния таблицы при любых изменениях
  * @param {HTMLButtonElement?} action
  */
 
- async function render (action) {
+async function render(action) {
     let state = collectState(); // состояние полей из таблицы
-    
-if (!updatePagination || !applyPagination) {
-    return
-}
+
+    if (!updatePagination || !applyPagination) {
+        return
+    }
     //let result = [...data]; // копируем для последующего изменения
     let query = {}
     // @todo: использование
@@ -77,6 +60,11 @@ if (!updatePagination || !applyPagination) {
     // result = applySorting(result, state, action);
     // result = applySearching(result, state, action);
     query = applyPagination(query, state, action);
+    query = applySorting(query, state, action);
+    query = applySearching(query, state, action);
+    query = applyFiltering(query, state, action);
+
+    console.log(query)
     const { total, items } = await api.getRecords(query);
     updatePagination(total, query);
     sampleTable.render(items)
@@ -98,13 +86,26 @@ const { updatePagination, applyPagination } = initPagination(sampleTable.paginat
         input.checked = isCurrent;
         label.textContent = page;
         return el;
-    })(new Array(221));
+    });
 
 console.log(updatePagination, applyPagination)
-
+console.log(sampleTable.filter.elements)
+const { applyFiltering, updateIndexes } = initFiltering(sampleTable.filter.elements)
+const applySearching = initSearching('search')
+const applySorting = initSorting([
+    sampleTable.header.elements.sortByDate,
+    sampleTable.header.elements.sortByTotal
+]);
 
 const appRoot = document.querySelector('#app');
 appRoot.appendChild(sampleTable.container);
 
- 
+async function init() {
+    const indexes = await api.getIndexes()
+
+    updateIndexes(sampleTable.filter.elements, {
+        searchBySeller: indexes.sellers
+    });
+}
+
 init().then(render)
